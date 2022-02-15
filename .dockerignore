@@ -1,0 +1,13 @@
+*
+!./deps/DTP/src/
+./deps/DTP/src/aitrans/*.zip
+./deps/DTP/src/aitrans/libtorch
+!./deps/DTP/deps/**
+!./deps/DTP/benches/**
+!./deps/DTP/include/**
+!./deps/DTP/examples/**
+!./deps/DTP/docker/aitrans-server
+!./deps/DTP/Cargo.toml
+!./deps/DTP/run_endpoint.sh
+!./c
+**/build
