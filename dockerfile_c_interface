@@ -30,7 +30,7 @@ COPY ./deps/DTP/src ./src
 COPY ./deps/DTP/include ./include
 COPY ./deps/DTP/Cargo.toml ./Cargo.toml
 WORKDIR /build/builder
-COPY ./c .
+COPY ./c_interface .
 RUN make
 
 FROM simonkorl0228/aitrans_image_base:buster

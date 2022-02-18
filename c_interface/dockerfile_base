@@ -1,0 +1,3 @@
+FROM simonkorl0228/aitrans_build:buster
+WORKDIR /build
+COPY . ./builder/

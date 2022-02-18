@@ -679,8 +679,8 @@ int main(int argc, char *argv[]) {
     quiche_config_set_initial_max_stream_data_bidi_local(config, 1000000000);
     quiche_config_set_initial_max_stream_data_bidi_remote(config, 1000000000);
     quiche_config_set_initial_max_streams_bidi(config, 10000);
-    quiche_config_set_cc_algorithm(config, QUICHE_CC_RENO);
-    quiche_config_set_scheduler_name(config, "dyn");
+    quiche_config_set_cc_algorithm(config, Aitrans_CC_TRIGGER);
+    quiche_config_set_scheduler_name(config, "c");
     // ACK ratio
     /* quiche_config_set_data_ack_ratio(config, 4); */
 

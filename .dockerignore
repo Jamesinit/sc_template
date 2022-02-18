@@ -10,4 +10,5 @@
 !./deps/DTP/Cargo.toml
 !./deps/DTP/run_endpoint.sh
 !./c
+!./c_interface
 **/build
