@@ -1,4 +1,9 @@
-FROM sc_base:latest AS chef
+## Build an AItransDTP format image with server and client from the src code
+## This dockerfile build server and client from `examples/` and put them in their corresponding position
+## in `aitrans-server` folder in aitrans_image_base
+## ** Prerequisites
+## This dockerfile uses [rust chef] to accelerate the building process
+FROM simonkorl0228/aitrans_build:buster AS chef
 # dependencies
 RUN rm -f /etc/apt/apt.conf.d/docker-clean; echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache
 RUN echo "[source.crates-io]\n\
