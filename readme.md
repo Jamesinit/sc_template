@@ -12,6 +12,7 @@
     - 样例：`docker build . -f dockerfile_base -t sc_base`
 2. 在修改后的 DTP 代码根目录下，使用 `dockerfile_full` 生成最终的测试用镜像。标签名可以自定。
     - 样例：`cd DTP && docker build . -f dockerfile_full -t test`
+    - 建议同时添加 `.dockerignore` 文件来减少文件检测的问题。模板代码目录下的`.dockerignore`文件可以作为参考
 
 或者可以：
 

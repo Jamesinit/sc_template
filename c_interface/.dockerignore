@@ -1,0 +1,10 @@
+*
+!src/
+!deps/**
+!benches/**
+!include/**
+!examples/**
+!docker/aitrans-server
+!Cargo.toml
+!run_endpoint.sh
+**/build

@@ -10,12 +10,12 @@ RUN cargo install cargo-chef
 WORKDIR /build
 # planner
 FROM chef AS planner
-COPY ../deps/DTP/benches ./benches
-COPY ../deps/DTP/deps ./deps
-COPY ../deps/DTP/examples ./examples
-COPY ../deps/DTP/src ./src
-COPY ../deps/DTP/include ./include
-COPY ../deps/DTP/Cargo.toml ./Cargo.toml
+COPY ./benches ./benches
+COPY ./deps ./deps
+COPY ./examples ./examples
+COPY ./src ./src
+COPY ./include ./include
+COPY ./Cargo.toml ./Cargo.toml
 RUN cargo chef prepare --recipe-path recipe.json
 
 FROM chef AS builder
@@ -23,12 +23,12 @@ WORKDIR /build
 COPY --from=planner /build/recipe.json recipe.json
 RUN cargo chef cook --release --recipe-path recipe.json
 # build app
-COPY ../deps/DTP/benches ./benches
-COPY ../deps/DTP/deps ./deps
-COPY ../deps/DTP/examples ./examples
-COPY ../deps/DTP/src ./src
-COPY ../deps/DTP/include ./include
-COPY ../deps/DTP/Cargo.toml ./Cargo.toml
+COPY ./benches ./benches
+COPY ./deps ./deps
+COPY ./examples ./examples
+COPY ./src ./src
+COPY ./include ./include
+COPY ./Cargo.toml ./Cargo.toml
 WORKDIR /build/builder
 RUN make
 
