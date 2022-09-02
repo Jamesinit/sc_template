@@ -31,7 +31,7 @@ client: client.c $(INCLUDE_DIR)/quiche.h $(LIB_DIR)/libquiche.a $(INCLUDE_DIR)/d
 	$(CC) $(CFLAGS) $(LDFLAGS) $< -o $@ $(INCS) $(LIBS) $(CPPFLAGS)
 
 $(LIB_DIR)/libquiche.a: $(shell find $(SOURCE_DIR) -type f -name '*.rs')
-	cd .. && cargo build --release --target-dir $(BUILD_DIR)
+	cd .. && cargo build --release --target-dir $(BUILD_DIR) --features "boringssl-vendored fec"
 
 clean:
 	@$(RM) -rf server client build/

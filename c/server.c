@@ -24,6 +24,8 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include <argp.h>
+#include <arpa/inet.h>
 #include <inttypes.h>
 #include <stdbool.h>
 #include <stdint.h>
@@ -43,6 +45,107 @@
 
 #include <dtp_config.h>
 #include <quiche.h>
+#include <helper.h>
+
+/***** Argp configs *****/
+
+const char *argp_program_version = "server-test 0.0.1";
+static char doc[] = "libev dtp server for test";
+static char args_doc[] = "SERVER_IP SERVER_PORT DTP_CONFIG";
+#define ARGS_NUM 3
+
+static bool FEC_ENABLE = false;
+static uint32_t TAILSIZE = 5;
+static double RATE = 0.1;
+static enum quiche_cc_algorithm CC = QUICHE_CC_RENO;
+static char SCHEDULER[100] = "dyn";
+
+static struct argp_option options[] = {
+    {"log", 'l', "FILE", 0, "log file with debug and error info"},
+    {"out", 'o', "FILE", 0, "output file with received file info"},
+    {"log-level", 'v', "LEVEL", 0, "log level ERROR 1 -> TRACE 5"},
+    {"color", 'c', 0, 0, "log with color"},
+    {"fec_enable", 'f', 0, 0, "enable fec"},
+    {"tailsize", 'z', "TAILSIZE", 0, "set tail size"},
+    {"rate", 'r', "RATE", 0, "set redundancy rate"},
+    {"cc-algorithm", 'a', "CC", 0, "set the cc algorithm ['reno', 'bbr', 'cubic']"},
+    {"scheduler-algorithm", 's', "SCHEDULER", 0, "set scheduler algorithm ['fifo', 'dtp']"},
+    {0}};
+
+struct arguments {
+    FILE *log;
+    FILE *out;
+    char *args[ARGS_NUM];
+};
+static struct arguments args;
+
+static error_t parse_opt(int key, char *arg, struct argp_state *state) {
+    struct arguments *arguments = state->input;
+    switch (key) {
+        case 'l':
+            arguments->log = fopen(arg, "w+");
+            break;
+        case 'o':
+            arguments->out = fopen(arg, "w+");
+            break;
+        case 'v':
+            LOG_LEVEL = arg ? atoi(arg) : 3;
+            break;
+        case 'c':
+            LOG_COLOR = 1;
+            break;
+        case 'f':
+            FEC_ENABLE = true;
+            break;
+        case 'z':
+            TAILSIZE = atoi(arg);
+            break;
+        case 'r':
+            RATE = atof(arg);
+            break;
+        case 'a':
+            if(strcmp(arg, "reno") == 0) {
+                CC = QUICHE_CC_RENO;               
+                fprintf(stderr, "set cc reno\n");
+            } else if (strcmp(arg, "bbr") == 0) {
+                CC = QUICHE_CC_BBR;
+                fprintf(stderr, "set cc bbr\n");
+            } else if (strcmp(arg, "cubic") == 0) {
+                CC = QUICHE_CC_CUBIC;
+                fprintf(stderr, "set cc cubic\n");
+            } else {
+                fprintf(stderr, "default cc algo reno\n");
+                CC = QUICHE_CC_RENO;
+            }
+            break;
+        case 's':
+            if(strcmp(arg, "basic") == 0 || strcmp(arg, "dtp") == 0) {
+                strcpy(SCHEDULER, arg);
+                fprintf(stderr, "copy scheduler %s\n", SCHEDULER);
+            } else {
+                fprintf(stderr, "default scheduler dyn\n");
+            }
+            break;
+        case ARGP_KEY_ARG:
+            if (state->arg_num >= ARGS_NUM) argp_usage(state);
+            arguments->args[state->arg_num] = arg;
+            break;
+        case ARGP_KEY_END:
+            if (state->arg_num < ARGS_NUM) argp_usage(state);
+            break;
+
+        default:
+            return ARGP_ERR_UNKNOWN;
+    }
+    return 0;
+}
+
+static struct argp argp = {options, parse_opt, args_doc, doc};
+
+#undef HELPER_LOG
+#undef HELPER_OUT
+#define HELPER_LOG args.log
+#define HELPER_OUT args.out
 
 #define LOCAL_CONN_ID_LEN 16
 
@@ -340,7 +443,9 @@ static struct conn_io *create_conn(struct ev_loop *loop, uint8_t *odcid,
     conn_io->can_send = 1350;
     conn_io->done_writing = false;
 
-    // quiche_conn_set_tail(conn, 5000);
+    if(FEC_ENABLE) {
+        quiche_conn_set_tail(conn, TAILSIZE);
+    }
 
     ev_init(&conn_io->timer, timeout_cb);
     conn_io->timer.data = conn_io;
@@ -625,13 +730,22 @@ static void timeout_cb(EV_P_ ev_timer *w, int revents) {
 }
 
 int main(int argc, char *argv[]) {
+
+    args.out = stdout;
+    args.log = stderr;
+    argp_parse(&argp, argc, argv, 0, 0, &args);
+    log_info("SERVER_IP %s SERVER_PORT %s DTP_CONFIG %s\n", args.args[0],
+             args.args[1], args.args[2]);
+    const char *host = args.args[0];
+    const char *port = args.args[1];
+    dtp_cfg_fname = args.args[2];
+
+    fprintf(stderr, "fec: %d, tailsize: %d, rate: %lf\n", FEC_ENABLE, TAILSIZE, RATE);
+
     fprintf(stderr, "server start,  timestamp: %lu\n",
             getCurrentUsec());
     WRITE_TO_FILE("server start,  timestamp: %lu\n",
             getCurrentUsec());
-    const char *host = argv[1];
-    const char *port = argv[2];
-    dtp_cfg_fname = argv[3];
 
     const struct addrinfo hints = {.ai_family = PF_UNSPEC,
                                    .ai_socktype = SOCK_DGRAM,
@@ -679,8 +793,13 @@ int main(int argc, char *argv[]) {
     quiche_config_set_initial_max_stream_data_bidi_local(config, 1000000000);
     quiche_config_set_initial_max_stream_data_bidi_remote(config, 1000000000);
     quiche_config_set_initial_max_streams_bidi(config, 10000);
-    quiche_config_set_cc_algorithm(config, QUICHE_CC_RENO);
-    quiche_config_set_scheduler_name(config, "dyn");
+    quiche_config_set_cc_algorithm(config, CC);
+    quiche_config_set_scheduler_name(config, SCHEDULER);
+    if(FEC_ENABLE) {
+        quiche_config_set_redundancy_rate(config, RATE);
+    } else {
+        quiche_config_set_redundancy_rate(config, 0);
+    }
     // ACK ratio
     /* quiche_config_set_data_ack_ratio(config, 4); */
 

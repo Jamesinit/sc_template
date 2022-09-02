@@ -100,6 +100,17 @@ const char *quiche_version(void);
 int quiche_enable_debug_logging(void (*cb)(const char *line, void *argp),
                                 void *argp);
 
+enum log_level {
+    Trace = 0,
+    Debug = 1,
+    Info = 2,
+    Warn = 3,
+    Error = 4,
+    Off = 5,
+};
+
+int quiche_set_debug_logging_level(enum log_level level);
+
 // Stores configuration shared between multiple connections.
 typedef struct Config quiche_config;
 
@@ -173,6 +184,9 @@ enum quiche_cc_algorithm {
 
 // Sets the congestion control algorithm used.
 void quiche_config_set_cc_algorithm(quiche_config *config, enum quiche_cc_algorithm algo);
+// TODO: void quiche_config_set_cc_algorithm_name(quiche_config *config, const char* name);
+
+void quiche_config_set_redundancy_rate(quiche_config *config, float rate);
 
 enum quiche_scheduler_type {
     SCHE_BASIC = 0,
