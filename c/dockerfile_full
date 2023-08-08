@@ -1,4 +1,4 @@
-FROM sc_base:latest AS chef
+FROM sc_base_w87:latest AS chef
 # dependencies
 RUN rm -f /etc/apt/apt.conf.d/docker-clean; echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache
 RUN echo "[source.crates-io]\n\
