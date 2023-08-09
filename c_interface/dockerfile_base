@@ -1,3 +1,4 @@
 FROM simonkorl0228/aitrans_build:buster
+RUN rustup self uninstall -y && curl https://sh.rustup.rs -sSf | bash -s -- -y 
 WORKDIR /build
 COPY . ./builder/
